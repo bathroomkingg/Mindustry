@@ -393,7 +393,7 @@ public class NetServer implements ApplicationListener{
         //current kick sessions
         VoteSession[] currentlyKicking = {null};
 
-        clientCommands.<Player>register("votekick", "[player...]", "Vote to kick a player.", (args, player) -> {
+        clientCommands.<Player>register("votekick", "[reason] [player...]", "Vote to kick a player and give a reason.", (args, player) -> {
             if(!Config.enableVotekick.bool()){
                 player.sendMessage("[scarlet]Vote-kick is disabled on this server.");
                 return;
@@ -423,12 +423,17 @@ public class NetServer implements ApplicationListener{
                 });
                 player.sendMessage(builder.toString());
             }else{
+                String reason = args[0];
+                if(reason.isEmpty()){
+                    player.sendMessage("You need a valid reason for the kick");
+                    return;
+                }
                 Player found;
-                if(args[0].length() > 1 && args[0].startsWith("#") && Strings.canParseInt(args[0].substring(1))){
-                    int id = Strings.parseInt(args[0].substring(1));
+                if(args[1].length() > 1 && args[1].startsWith("#") && Strings.canParseInt(args[1].substring(1))){
+                    int id = Strings.parseInt(args[1].substring(1));
                     found = Groups.player.find(p -> p.id() == id);
                 }else{
-                    found = Groups.player.find(p -> p.name.equalsIgnoreCase(args[0]));
+                    found = Groups.player.find(p -> p.name.equalsIgnoreCase(args[1]));
                 }
 
                 if(found != null){
@@ -450,11 +455,12 @@ public class NetServer implements ApplicationListener{
 
                         VoteSession session = new VoteSession(currentlyKicking, found);
                         session.vote(player, 1);
+                        Call.sendMessage(reason);
                         vtime.reset();
-                        currentlyKicking[0] = session;
+                        currentlyKicking[1] = session;
                     }
                 }else{
-                    player.sendMessage("[scarlet]No player [orange]'" + args[0] + "'[scarlet] found.");
+                    player.sendMessage("[scarlet]No player [orange]'" + args[1] + "'[scarlet] found.");
                 }
             }
         });
